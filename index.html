@@ -74,16 +74,16 @@
             box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
         }
 
-        /* Архив болон Нэгтгэл хэсгийн үр дүнг товчлуур хэлбэртэй болгох нь */
+        /* Дарж устгадаг болгосон архив / нэгтгэлийн товч */
         .summary-btn {
             color: #fff !important;
             font-size: 15px !important;
             font-weight: 700 !important;
-            box-shadow: 4px 4px 0px -1px #ff0080, 4px 4px 0px 1px #000 !important;
+            box-shadow: 4px 4px 0px -1px #ff5c5c, 4px 4px 0px 1px #000 !important;
             padding: 18px !important;
             border-radius: 16px !important;
             border: 2px solid #000 !important;
-            background: radial-gradient(circle at top right, #ff0080, #7928ca) !important;
+            background: radial-gradient(circle at top right, #ff5c5c, #d32f2f) !important;
             cursor: pointer !important;
             transition: 0.3s ease !important;
             width: 100% !important;
@@ -95,28 +95,7 @@
 
         .summary-btn:hover {
             transform: translate(-.1em, -.1em) !important;
-            box-shadow: 7px 7px 0px -1px #ff0080, 7px 7px 0px 1px #000 !important;
-        }
-
-        .delete-btn {
-            background: #ff5c5c !important;
-            color: #fff !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            padding: 6px 12px !important;
-            border-radius: 8px !important;
-            border: 2px solid #000 !important;
-            cursor: pointer !important;
-            box-shadow: 2px 2px 0px #000 !important;
-            transition: 0.2s ease !important;
-            width: auto !important;
-            display: inline-block !important;
-            margin: 0 !important;
-        }
-
-        .delete-btn:hover {
-            transform: translate(-1px, -1px);
-            box-shadow: 4px 4px 0px #000 !important;
+            box-shadow: 7px 7px 0px -1px #ff0000, 7px 7px 0px 1px #000 !important;
         }
 
         .nav-container {
@@ -424,7 +403,7 @@
                 options.forEach((opt, idx) => {
                     html += `
                         <div style="margin-bottom: 15px;">
-                            <button class="summary-btn" onclick="saveSummary(${idx})">Хувилбар #${idx + 1}-ийг сонгож хадгалах:\n\n${opt}</button>
+                            <button class="custom-btn" onclick="saveSummary(${idx})">Хувилбар #${idx + 1}-ийг сонгож хадгалах:\n\n${opt}</button>
                         </div>
                     `;
                 });
@@ -454,6 +433,7 @@
                 return;
             }
 
+            dates.dates = dates; // safe
             dates.forEach(d => {
                 const opt = document.createElement("option");
                 opt.value = d;
@@ -477,12 +457,9 @@
             const data = window.appData[selectedDate];
             let html = "";
             if (data && data.summary) {
-                html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">`;
-                html += `<p style="text-align:left; margin:0;"><strong>${selectedDate} өдрийн хураангуй:</strong></p>`;
-                html += `<button class="delete-btn" onclick="deleteArchive('${selectedDate}')">🗑️ Устгах</button>`;
-                html += `</div>`;
-                // Энд текст хэлбэртэй байсныг товчлуурын загвартай (summary-btn) болгож өөрчлөв
-                html += `<button class="summary-btn" style="cursor: default !important; transform: none !important;">${data.summary}</button>`;
+                html += `<p style="text-align:left; margin-top:15px; margin-bottom:5px;"><strong>${selectedDate} өдрийн хураангуй (Дараад устгах):</strong></p>`;
+                // Энд тухайн текст блок дээр дарахад шууд deleteArchive ажиллахаар товчлуур болгов
+                html += `<button class="summary-btn" onclick="deleteArchive('${selectedDate}')">🗑️ ${data.summary}</button>`;
             } else {
                 html += `<p style="text-align:left; margin-top:15px; color: #94a3b8;">Энэ өдөр тайлан хадгалаагүй байна.</p>`;
             }
@@ -491,7 +468,7 @@
         }
 
         window.deleteArchive = async function(dateKey) {
-            if (confirm(`${dateKey} өдрийн архивыг бүхэлд нь устгахдаа итгэлтэй байна уу?`)) {
+            if (confirm(`${dateKey} өдрийн архивыг устгахдаа итгэлтэй байна уу?`)) {
                 if (window.appData[dateKey]) {
                     delete window.appData[dateKey];
                     await saveDataToGist();
