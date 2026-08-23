@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS
+# Загварлаг CSS (Бүх товч болон картуудыг хэвтээ болон цэвэрхэн харагдуулах)
 st.markdown(
     """
     <style>
@@ -38,19 +38,6 @@ st.markdown(
         color: #f8fafc;
     }
     
-    /* 3 товчлуурыг хэвтээ байрлуулах зохицуулалт */
-    [data-testid="column"] {
-        width: calc(33.333% - 1rem) !important;
-        flex: 1 1 calc(33.333% - 1rem) !important;
-        min-width: 90px !important;
-    }
-    
-    div[data-testid="horizontal--block"], div.row-widget.stHorizontal {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-    }
-
     /* Товчны ерөнхий загвар */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
@@ -72,7 +59,7 @@ st.markdown(
         box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
     }
 
-    /* Бодит цаг харуулах картын загвар */
+    /* Улаанбаатар цаг */
     .live-clock-card {
         background: rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(12px);
@@ -83,17 +70,6 @@ st.markdown(
         text-align: center;
         margin-bottom: 20px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    /* Тэмдэглэлийн карт */
-    .log-card-box {
-        position: relative;
-        background: rgba(15, 23, 42, 0.85);
-        border: 2px solid #0adabe;
-        padding: 14px 16px;
-        border-radius: 14px;
-        margin-bottom: 8px;
-        box-shadow: 4px 4px 0px #0adabe;
     }
 
     .summary-box {
@@ -113,27 +89,6 @@ st.markdown(
         color: #f8fafc !important;
         border: 2px solid #0adabe !important;
         border-radius: 12px !important;
-    }
-
-    .neon-loader-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 30px;
-    }
-    .neon-ring {
-        width: 60px;
-        height: 60px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
-        border-top: 3px solid #2ff5ca;
-        border-radius: 50%;
-        animation: neonSpin 0.9s linear infinite;
-        box-shadow: 0 0 15px rgba(47, 245, 202, 0.5);
-    }
-    @keyframes neonSpin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
     }
     </style>
 """,
@@ -169,18 +124,20 @@ def save_data(data):
 if "data" not in st.session_state:
     st.session_state.data = load_data()
 
-now_ub = get_ub_now()
-today_str = now_ub.strftime("%Y-%m-%d")
+# Шууд Python болон JS хослуулан сервер болон browser дээр алдаагүй гаргах цаг
+initial_ub = get_ub_now()
+initial_time_str = initial_ub.strftime("%Y оны %m сарын %d · %H:%M:%S")
+today_str = initial_ub.strftime("%Y-%m-%d")
 
 st.markdown(
-    """
+    f"""
     <div class="live-clock-card">
         <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Улаанбаатарын цаг</span>
-        <div id="live-clock" style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">Уншиж байна...</div>
+        <div id="live-clock" style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">{initial_time_str}</div>
     </div>
     <script>
     function updateClock() {
-        const options = { timeZone: 'Asia/Ulaanbaatar', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        const options = {{ timeZone: 'Asia/Ulaanbaatar', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
         const formatter = new Intl.DateTimeFormat([], options);
         const d = new Date();
         const parts = formatter.formatToParts(d);
@@ -193,10 +150,12 @@ st.markdown(
             if (p.type === 'minute') minute = p.value;
             if (p.type === 'second') second = p.value;
         }
-        document.getElementById('live-clock').innerText = year + ' оны ' + month + ' сарын ' + day + ' · ' + hour + ':' + minute + ':' + second;
+        const elem = document.getElementById('live-clock');
+        if (elem) {
+            elem.innerText = year + ' оны ' + month + ' сарын ' + day + ' · ' + hour + ':' + minute + ':' + second;
+        }
     }
     setInterval(updateClock, 1000);
-    updateClock();
     </script>
     """,
     unsafe_allow_html=True,
@@ -251,10 +210,9 @@ if st.session_state.nav_page == "Бүртгэх":
             st.rerun()
 
     st.markdown(f"#### Өнөөдрийн тэмдэглэл ({today_str})")
+    st.markdown("<p style='font-size: 13px; color: #94a3b8;'>💡 Засахын тулд тухайн хийсэн ажил дээрээ дарна уу.</p>", unsafe_allow_html=True)
 
-    if today_str in st.session_state.data and st.session_state.data[today_str].get(
-        "logs"
-    ):
+    if today_str in st.session_state.data and st.session_state.data[today_str].get("logs"):
         logs_list = st.session_state.data[today_str]["logs"]
 
         if "editing_id" not in st.session_state:
@@ -271,7 +229,8 @@ if st.session_state.nav_page == "Бүртгэх":
                     updated_text = st.text_area(
                         "Засах утга:", value=item_text, height=80, label_visibility="collapsed"
                     )
-                    c_save, c_del, c_cancel = st.columns([2, 2, 2])
+                    # Хэвтээ байдлаар товчлууруудыг зэрэгцүүлэх
+                    c_save, c_del, c_cancel = st.columns(3)
                     with c_save:
                         save_btn = st.form_submit_button("💾 Хадгалах")
                     with c_del:
@@ -295,22 +254,11 @@ if st.session_state.nav_page == "Бүртгэх":
                         st.session_state.editing_id = None
                         st.rerun()
             else:
-                col_card, col_edit_btn = st.columns([6, 1])
-                with col_card:
-                    st.markdown(
-                        f"""
-                        <div class="log-card-box">
-                            <span style="font-size: 11px; background: #2ff5ca; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 700;">🕒 {item_time}</span>
-                            <p style="font-size: 14px; margin-top: 6px; font-weight: 600; color: #f8fafc; margin-bottom: 0px; word-break: break-word;">{item_text}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-                with col_edit_btn:
-                    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                    if st.button("✏️", key=f"edit_trigger_{item_id}", help="Засварлах / Устгах"):
-                        st.session_state.editing_id = item_id
-                        st.rerun()
+                # Текст болон ажил оруулсан хэсгийг бүтэн товч хэлбэртэй болгож дээр нь дарвал засагддаг болгох
+                btn_label = f"🕒 {item_time}  |  {item_text}"
+                if st.button(btn_label, key=f"btn_edit_{item_id}", use_container_width=True):
+                    st.session_state.editing_id = item_id
+                    st.rerun()
     else:
         st.info("Өнөөдөр одоогоор бүртгэсэн ажил алга.")
 
@@ -364,7 +312,7 @@ elif st.session_state.nav_page == "Нэгтгэл":
         selected_option = st.radio(
             "Хувилбар сонгох:",
             options=range(len(st.session_state["ai_options"])),
-            format_func=lambda x: f"Хувилбар #{x + 1} (Сонгохын тулд дарна уу)",
+            format_func=lambda x: f"Хувилбар #{x + 1}",
             label_visibility="collapsed"
         )
 
@@ -416,10 +364,47 @@ elif st.session_state.nav_page == "Архив":
             else:
                 st.info("Энэ өдөр тайлан хадгалаагүй байна.")
 
-            with st.expander("Тухайн өдрийн дэлгэрэнгүй жагсаалт"):
-                for item in st.session_state.data[selected_date].get(
-                    "logs", []
-                ):
-                    st.markdown(f"- **{item['time']}**: {item['text']}")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.write("**Тухайн өдрийн дэлгэрэнгүй жагсаалт (Засах эсвэл устгах):**")
+
+            if "archive_editing_id" not in st.session_state:
+                st.session_state.archive_editing_id = None
+
+            archive_logs = st.session_state.data[selected_date].get("logs", [])
+            for item in archive_logs:
+                item_id = item["id"]
+                item_time = item["time"]
+                item_text = item["text"]
+
+                if st.session_state.archive_editing_id == item_id:
+                    with st.form(key=f"archive_edit_form_{item_id}"):
+                        up_text = st.text_area("Засах:", value=item_text, height=80, label_visibility="collapsed")
+                        c1, c2, c3 = st.columns(3)
+                        with c1:
+                            s_btn = st.form_submit_button("💾 Хадгалах")
+                        with c2:
+                            d_btn = st.form_submit_button("🗑️ Устгах")
+                        with c3:
+                            c_btn = st.form_submit_button("❌ Болих")
+
+                        if s_btn:
+                            item["text"] = up_text
+                            save_data(st.session_state.data)
+                            st.session_state.archive_editing_id = None
+                            st.rerun()
+                        if d_btn:
+                            st.session_state.data[selected_date]["logs"] = [
+                                x for x in archive_logs if x["id"] != item_id
+                            ]
+                            save_data(st.session_state.data)
+                            st.session_state.archive_editing_id = None
+                            st.rerun()
+                        if c_btn:
+                            st.session_state.archive_editing_id = None
+                            st.rerun()
+                else:
+                    if st.button(f"🕒 {item_time}  |  {item_text}", key=f"arch_btn_{item_id}", use_container_width=True):
+                        st.session_state.archive_editing_id = item_id
+                        st.rerun()
     else:
         st.info("Архив хоосон байна.")
