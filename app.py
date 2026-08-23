@@ -2,8 +2,17 @@ from datetime import datetime
 import json
 import os
 import time
+from zoneinfo import ZoneInfo
 from google import genai
 import streamlit as st
+
+# Улаанбаатар хотын цагийн бүс
+UB_TZ = ZoneInfo("Asia/Ulaanbaatar")
+
+
+def get_ub_now():
+    return datetime.now(UB_TZ)
+
 
 # Веб хуудасны тохиргоо
 st.set_page_config(
@@ -160,16 +169,35 @@ def save_data(data):
 if "data" not in st.session_state:
     st.session_state.data = load_data()
 
-now = datetime.now()
-today_str = now.strftime("%Y-%m-%d")
-current_time_py = now.strftime("%Y оны %m сарын %d · %H:%M:%S")
+now_ub = get_ub_now()
+today_str = now_ub.strftime("%Y-%m-%d")
 
 st.markdown(
-    f"""
+    """
     <div class="live-clock-card">
-        <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Одоогийн цаг</span>
-        <div style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">{current_time_py}</div>
+        <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Улаанбаатарын цаг</span>
+        <div id="live-clock" style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">Уншиж байна...</div>
     </div>
+    <script>
+    function updateClock() {
+        const options = { timeZone: 'Asia/Ulaanbaatar', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        const formatter = new Intl.DateTimeFormat([], options);
+        const d = new Date();
+        const parts = formatter.formatToParts(d);
+        let year, month, day, hour, minute, second;
+        for (let p of parts) {
+            if (p.type === 'year') year = p.value;
+            if (p.type === 'month') month = p.value;
+            if (p.type === 'day') day = p.value;
+            if (p.type === 'hour') hour = p.value;
+            if (p.type === 'minute') minute = p.value;
+            if (p.type === 'second') second = p.value;
+        }
+        document.getElementById('live-clock').innerText = year + ' оны ' + month + ' сарын ' + day + ' · ' + hour + ':' + minute + ':' + second;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+    </script>
     """,
     unsafe_allow_html=True,
 )
@@ -187,7 +215,6 @@ st.markdown("---")
 if "nav_page" not in st.session_state:
     st.session_state.nav_page = "Бүртгэх"
 
-# 3 товчлуурыг хэвтээ байдлаар зэрэгцүүлэх
 col_n1, col_n2, col_n3 = st.columns(3)
 with col_n1:
     if st.button("📝 Бүртгэх", use_container_width=True):
@@ -211,7 +238,7 @@ if st.session_state.nav_page == "Бүртгэх":
         )
         submitted = st.form_submit_button("Бүртгэх")
         if submitted and task_input:
-            time_str = datetime.now().strftime("%H:%M")
+            time_str = get_ub_now().strftime("%H:%M")
             if today_str not in st.session_state.data:
                 st.session_state.data[today_str] = {"logs": [], "summary": ""}
 
@@ -230,35 +257,65 @@ if st.session_state.nav_page == "Бүртгэх":
     ):
         logs_list = st.session_state.data[today_str]["logs"]
 
+        if "editing_id" not in st.session_state:
+            st.session_state.editing_id = None
+
         for item in logs_list:
             item_id = item["id"]
             item_time = item["time"]
             item_text = item["text"]
 
-            col_card, col_btn = st.columns([5, 1])
-            with col_card:
-                st.markdown(
-                    f"""
-                    <div class="log-card-box">
-                        <span style="font-size: 11px; background: #2ff5ca; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 700;">🕒 {item_time}</span>
-                        <p style="font-size: 14px; margin-top: 6px; font-weight: 600; color: #f8fafc; margin-bottom: 0px; word-break: break-word;">{item_text}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with col_btn:
-                st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                if st.button("❌", key=f"del_{item_id}", help="Устгах"):
-                    st.session_state.data[today_str]["logs"] = [
-                        x for x in logs_list if x["id"] != item_id
-                    ]
-                    save_data(st.session_state.data)
-                    st.rerun()
+            if st.session_state.editing_id == item_id:
+                st.markdown(f"**🕒 {item_time} - Засварлах хэсэг:**")
+                with st.form(key=f"edit_form_{item_id}"):
+                    updated_text = st.text_area(
+                        "Засах утга:", value=item_text, height=80, label_visibility="collapsed"
+                    )
+                    c_save, c_del, c_cancel = st.columns([2, 2, 2])
+                    with c_save:
+                        save_btn = st.form_submit_button("💾 Хадгалах")
+                    with c_del:
+                        delete_btn = st.form_submit_button("🗑️ Устгах")
+                    with c_cancel:
+                        cancel_btn = st.form_submit_button("❌ Болих")
+
+                    if save_btn:
+                        item["text"] = updated_text
+                        save_data(st.session_state.data)
+                        st.session_state.editing_id = None
+                        st.rerun()
+                    if delete_btn:
+                        st.session_state.data[today_str]["logs"] = [
+                            x for x in logs_list if x["id"] != item_id
+                        ]
+                        save_data(st.session_state.data)
+                        st.session_state.editing_id = None
+                        st.rerun()
+                    if cancel_btn:
+                        st.session_state.editing_id = None
+                        st.rerun()
+            else:
+                col_card, col_edit_btn = st.columns([6, 1])
+                with col_card:
+                    st.markdown(
+                        f"""
+                        <div class="log-card-box">
+                            <span style="font-size: 11px; background: #2ff5ca; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 700;">🕒 {item_time}</span>
+                            <p style="font-size: 14px; margin-top: 6px; font-weight: 600; color: #f8fafc; margin-bottom: 0px; word-break: break-word;">{item_text}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                with col_edit_btn:
+                    st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
+                    if st.button("✏️", key=f"edit_trigger_{item_id}", help="Засварлах / Устгах"):
+                        st.session_state.editing_id = item_id
+                        st.rerun()
     else:
         st.info("Өнөөдөр одоогоор бүртгэсэн ажил алга.")
 
 elif st.session_state.nav_page == "Нэгтгэл":
-    st.markdown("#### Ажлын нэгтгэл ба тайлан")
+    st.markdown("#### Ажлын тайлан нэгтгэх")
 
 
     def generate_options_with_ai(logs_list):
@@ -270,22 +327,21 @@ elif st.session_state.nav_page == "Нэгтгэл":
             logs_text += f"[{log['time']}] {log['text']}\n"
 
         prompt = f"""
-Доорх өдрийн ажлын тэмдэглэл дээр үндэслэн тус бүр өөр хэв маяг, загвартай **3 өөр хувилбарын** тайлан гаргаж өгнө үү.
+Доорх ажил боловсруулсан тэмдэглэлүүд дээр үндэслэн ямар нэгэн илүү дутуу оршил, тайлбар үггүйгээр шууд цэвэр тайлангийн агуулга бүхий **3 өөр загварын хувилбар** бэлтгэж өгнө үү.
 Хувилбар тус бүрийг '---HUVIILBAR---' гэсэн үгээр хооронд нь зааглаж ялгаж бичнэ үү.
 
 Тэмдэглэлүүд:
 {logs_text}
 
 Хувилбарууд:
-1. Маш товч, цэгцтэй жагсаалт хэлбэрээр (Bullet points).
-2. Албан ёсны тайлангийн хэлбэрээр (Байгууллагад өгөхөд тохиромжтой хэл найруулгатай).
-3. Өгүүлбэр хэлбэртэй, дэлгэрэнгүй хураангуй байдлаар.
+1. Цэгцтэй гол санааг гаргасан товч жагсаалт хэлбэрээр.
+2. Албан ёсны ажил хэргийн тайлан байдлаар.
+3. Нэгтгэсэн цулгуй өгүүлбэр хэлбэртэйгээр.
 """
         try:
             response = client.models.generate_content(
                 model="gemini-3.6-flash", contents=prompt
             )
-            # ---HUVIILBAR--- гэсэн үгээр хувааж жагсаалт болгох
             parts = response.text.split("---HUVIILBAR---")
             cleaned_parts = [p.strip() for p in parts if p.strip()]
             return cleaned_parts if cleaned_parts else [response.text]
@@ -293,23 +349,23 @@ elif st.session_state.nav_page == "Нэгтгэл":
             return [f"АЛДАА ГАРЛАА: {str(e)}"]
 
 
-    if st.button("AI-аар олон хувилбар үүсгэх"):
+    if st.button("✨ Тайлангийн хувилбарууд үүсгэх"):
         if today_str in st.session_state.data and st.session_state.data[today_str].get("logs"):
-            with st.spinner("AI хувилбаруудыг бэлтгэж байна..."):
+            with st.spinner("Боловсруулж байна..."):
                 options = generate_options_with_ai(st.session_state.data[today_str]["logs"])
                 st.session_state["ai_options"] = options
         else:
             st.warning("Нэгтгэх ажил одоогоор бүртгэгдээгүй байна.")
 
-    # Хэрэв AI хувилбарууд үүссэн бол сонголт гарч ирнэ
     if "ai_options" in st.session_state and st.session_state["ai_options"]:
         st.markdown("---")
-        st.markdown("#### Аль хувилбарыг нь архив руу оруулах вэ?")
+        st.markdown("<p style='color: #2ff5ca; font-weight: 700; margin-bottom: 10px;'>📌 Таалагдсан хувилбараа сонгоно уу:</p>", unsafe_allow_html=True)
         
         selected_option = st.radio(
-            "Тайлангийн хувилбар сонгох:",
+            "Хувилбар сонгох:",
             options=range(len(st.session_state["ai_options"])),
-            format_func=lambda x: f"Хувилбар {x + 1}"
+            format_func=lambda x: f"Хувилбар #{x + 1} (Сонгохын тулд дарна уу)",
+            label_visibility="collapsed"
         )
 
         st.markdown(
@@ -321,12 +377,12 @@ elif st.session_state.nav_page == "Нэгтгэл":
             unsafe_allow_html=True,
         )
 
-        if st.button("Сонгосон хувилбарыг Архив руу хадгалах"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("💾 Сонгосон хувилбарыг Архив руу хадгалах"):
             st.session_state.data[today_str]["summary"] = st.session_state["ai_options"][selected_option]
             save_data(st.session_state.data)
-            st.success("Амжилттай Архив руу хадгалагдлаа! (Архив хэсгээс харна уу)")
+            st.success("Амжилттай Архив руу хадгалагдлаа!")
 
-    # Өмнө нь хадгалсан summary байвал харуулах
     elif today_str in st.session_state.data and st.session_state.data[today_str].get("summary"):
         st.markdown("#### Өнөөдрийн хадгалсан тайлан:")
         st.markdown(
