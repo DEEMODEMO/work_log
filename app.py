@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS (Таб товчлууруудыг хэвтээ байрлуулах тохиргоо)
+# Загварлаг CSS
 st.markdown(
     """
     <style>
@@ -42,7 +42,7 @@ st.markdown(
         align-items: center !important;
     }
 
-    /* Товчны ерөнхий загвар (Устгах товчийг бусадтай яг ижил болгосон) */
+    /* Товчны ерөнхий загвар */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
         font-size: 13px !important;
@@ -248,7 +248,6 @@ if st.session_state.nav_page == "Бүртгэх":
                 )
             with col_btn:
                 st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                # Устгах товч (❌) - бусад товчлууртай яг ижил загвартай боллоо
                 if st.button("❌", key=f"del_{item_id}", help="Устгах"):
                     st.session_state.data[today_str]["logs"] = [
                         x for x in logs_list if x["id"] != item_id
@@ -262,58 +261,74 @@ elif st.session_state.nav_page == "Нэгтгэл":
     st.markdown("#### Ажлын нэгтгэл ба тайлан")
 
 
-    def summarize_with_ai(logs_list):
+    def generate_options_with_ai(logs_list):
         if not logs_list:
-            return "Өнөөдөр бүртгэгдсэн ажил алга байна."
-        prompt = (
-            "Доорх цагийн дарааллаар хийсэн ажлуудыг тайлан гаргахад яг тохирохоор "
-            "маш цэгцтэй, ойлгомжтой, товч тодорхой жагсаалт болгон Монгол хэлээр дүгнэж өгнө үү:\n\n"
-        )
+            return []
+        
+        logs_text = ""
         for log in logs_list:
-            prompt += f"[{log['time']}] {log['text']}\n"
+            logs_text += f"[{log['time']}] {log['text']}\n"
+
+        prompt = f"""
+Доорх өдрийн ажлын тэмдэглэл дээр үндэслэн тус бүр өөр хэв маяг, загвартай **3 өөр хувилбарын** тайлан гаргаж өгнө үү.
+Хувилбар тус бүрийг '---HUVIILBAR---' гэсэн үгээр хооронд нь зааглаж ялгаж бичнэ үү.
+
+Тэмдэглэлүүд:
+{logs_text}
+
+Хувилбарууд:
+1. Маш товч, цэгцтэй жагсаалт хэлбэрээр (Bullet points).
+2. Албан ёсны тайлангийн хэлбэрээр (Байгууллагад өгөхөд тохиромжтой хэл найруулгатай).
+3. Өгүүлбэр хэлбэртэй, дэлгэрэнгүй хураангуй байдлаар.
+"""
         try:
-            # Gemini 2.5 Flash загвар руу холбогдож байна
             response = client.models.generate_content(
-                model="gemini-3.6-flash", contents=prompt
+                model="gemini-2.5-flash", contents=prompt
             )
-            return response.text
+            # ---HUVIILBAR--- гэсэн үгээр хувааж жагсаалт болгох
+            parts = response.text.split("---HUVIILBAR---")
+            cleaned_parts = [p.strip() for p in parts if p.strip()]
+            return cleaned_parts if cleaned_parts else [response.text]
         except Exception as e:
-            return f"АЛДАА ГАРЛАА: {str(e)}"
+            return [f"АЛДАА ГАРЛАА: {str(e)}"]
 
 
-    if st.button("Тайлан гаргах"):
-        if today_str in st.session_state.data and st.session_state.data[
-            today_str
-        ].get("logs"):
-            placeholder_loading = st.empty()
-            placeholder_loading.markdown(
-                """
-                <div class="neon-loader-container">
-                    <div class="neon-ring"></div>
-                    <div style="margin-top: 15px; color: #2ff5ca; font-weight: 700; font-size: 14px;">Тайланг боловсруулж байна...</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            summary_result = summarize_with_ai(
-                st.session_state.data[today_str]["logs"]
-            )
-            st.session_state.data[today_str]["summary"] = summary_result
-            save_data(st.session_state.data)
-
-            placeholder_loading.empty()
-            st.success("Тайлан амжилттай үүслээ!")
-            st.rerun()
+    if st.button("AI-аар олон хувилбар үүсгэх"):
+        if today_str in st.session_state.data and st.session_state.data[today_str].get("logs"):
+            with st.spinner("AI хувилбаруудыг бэлтгэж байна..."):
+                options = generate_options_with_ai(st.session_state.data[today_str]["logs"])
+                st.session_state["ai_options"] = options
         else:
             st.warning("Нэгтгэх ажил одоогоор бүртгэгдээгүй байна.")
 
-    if (
-        today_str in st.session_state.data
-        and "summary" in st.session_state.data[today_str]
-        and st.session_state.data[today_str]["summary"]
-    ):
-        st.markdown("#### Нэгтгэсэн үр дүн:")
+    # Хэрэв AI хувилбарууд үүссэн бол сонголт гарч ирнэ
+    if "ai_options" in st.session_state and st.session_state["ai_options"]:
+        st.markdown("---")
+        st.markdown("#### Аль хувилбарыг нь архив руу оруулах вэ?")
+        
+        selected_option = st.radio(
+            "Тайлангийн хувилбар сонгох:",
+            options=range(len(st.session_state["ai_options"])),
+            format_func=lambda x: f"Хувилбар {x + 1}"
+        )
+
+        st.markdown(
+            f"""
+            <div class="summary-box">
+                {st.session_state["ai_options"][selected_option]}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Сонгосон хувилбарыг Архив руу хадгалах"):
+            st.session_state.data[today_str]["summary"] = st.session_state["ai_options"][selected_option]
+            save_data(st.session_state.data)
+            st.success("Амжилттай Архив руу хадгалагдлаа! (Архив хэсгээс харна уу)")
+
+    # Өмнө нь хадгалсан summary байвал харуулах
+    elif today_str in st.session_state.data and st.session_state.data[today_str].get("summary"):
+        st.markdown("#### Өнөөдрийн хадгалсан тайлан:")
         st.markdown(
             f"""
             <div class="summary-box">
@@ -343,7 +358,7 @@ elif st.session_state.nav_page == "Архив":
                     unsafe_allow_html=True,
                 )
             else:
-                st.info("Энэ өдөр тайлан үүсгээгүй байна.")
+                st.info("Энэ өдөр тайлан хадгалаагүй байна.")
 
             with st.expander("Тухайн өдрийн дэлгэрэнгүй жагсаалт"):
                 for item in st.session_state.data[selected_date].get(
