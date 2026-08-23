@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг фон болон 2 секунд удаан дарж (Hold) устгах эффектэд зориулсан CSS/JS
+# Загварлаг CSS
 st.markdown(
     """
     <style>
@@ -29,7 +29,7 @@ st.markdown(
         color: #f8fafc;
     }
     
-    /* Үндсэн товчны загвар */
+    /* Товчны загвар */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
         font-size: 13px !important;
@@ -50,43 +50,30 @@ st.markdown(
         box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
     }
 
-    .stButton>button:active, div.stFormSubmitButton>button:active {
-        transform: translate(.3em, .3em) !important;
-        box-shadow: 0px 0px 0px -1px #BEE2F9, 0px 0px 0px 0.1px #000 !important;
-    }
-
-    /* Бодит цаг харуулах загварлаг хэсэг */
+    /* Бодит цаг харуулах картын загвар */
     .live-clock-card {
         background: rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 10px 15px;
+        padding: 12px 15px;
         border-radius: 16px;
         text-align: center;
         margin-bottom: 20px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    /* Ажлын тэмдэглэлийн үндсэн карт (Ямар ч илүү товчгүй, цэвэрхэн) */
+    /* Тэмдэглэлийн карт */
     .log-card-box {
         position: relative;
         background: rgba(15, 23, 42, 0.85);
         border: 2px solid #0adabe;
         padding: 14px 16px;
         border-radius: 14px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         box-shadow: 4px 4px 0px #0adabe;
-        cursor: pointer;
-        user-select: none;
-        transition: 0.2s;
-    }
-    .log-card-box:hover {
-        border-color: #ef4444;
-        box-shadow: 4px 4px 0px #ef4444;
     }
 
-    /* Үр дүнгийн хайрцаг */
     .summary-box {
         padding: 22px;
         border-radius: 16px;
@@ -160,46 +147,27 @@ def save_data(data):
 if "data" not in st.session_state:
     st.session_state.data = load_data()
 
-data = st.session_state.data
-today_str = datetime.now().strftime("%Y-%m-%d")
+now = datetime.now()
+today_str = now.strftime("%Y-%m-%d")
+current_time_py = now.strftime("%Y оны %m сарын %d · %H:%M:%S")
 
+# Python-оор цаг гаргах хэсэг
 st.markdown(
-    """
+    f"""
     <div class="live-clock-card">
-        <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Бодит цаг хугацаа</span>
-        <div id="live-clock" style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">Уншиж байна...</div>
+        <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Одоогийн цаг</span>
+        <div style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">{current_time_py}</div>
     </div>
-    
-    <script>
-    function updateClock() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        
-        const timeString = year + " оны " + month + " сарын " + day + " · " + hours + ":" + minutes + ":" + seconds;
-        const clockElement = document.getElementById('live-clock');
-        if (clockElement) {
-            clockElement.innerText = timeString;
-        }
-    }
-    if (window.clockInterval) clearInterval(window.clockInterval);
-    window.clockInterval = setInterval(updateClock, 1000);
-    updateClock();
-    </script>
     """,
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    "<h2 style='text-align: center; color: #2ff5ca; font-weight: 800; text-shadow: 0 2px 10px rgba(47,245,202,0.3);'>Ажлын Тэмдэглэл & Тайлан</h2>",
+    "<h2 style='text-align: center; color: #2ff5ca; font-weight: 800;'>Ажлын Тэмдэглэл & Тайлан</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; color: #cbd5e1; font-size: 14px; font-weight: 500;'>Өдрийн ажлаа бүртгээд тайлангаа хялбархан нэгтгээрэй.</p>",
+    "<p style='text-align: center; color: #cbd5e1; font-size: 14px;'>Өдрийн ажлаа бүртгээд тайлангаа хялбархан нэгтгээрэй.</p>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
@@ -230,23 +198,19 @@ if st.session_state.nav_page == "Бүртгэх":
         )
         submitted = st.form_submit_button("Бүртгэх")
         if submitted and task_input:
-            current_time = datetime.now().strftime("%H:%M")
+            time_str = datetime.now().strftime("%H:%M")
             if today_str not in st.session_state.data:
                 st.session_state.data[today_str] = {"logs": [], "summary": ""}
 
             new_id = f"log_{int(time.time() * 1000)}"
             st.session_state.data[today_str]["logs"].append(
-                {"id": new_id, "time": current_time, "text": task_input}
+                {"id": new_id, "time": time_str, "text": task_input}
             )
             save_data(st.session_state.data)
             st.success("Амжилттай бүртгэгдлээ!")
             st.rerun()
 
     st.markdown(f"#### Өнөөдрийн тэмдэглэл ({today_str})")
-    st.markdown(
-        "<p style='font-size: 12px; color: #2ff5ca; margin-top: -5px;'>💡 Карт дээр <b>2 секунд тасралтгүй дарж (Hold)</b> байхад шууд устгагдана.</p>",
-        unsafe_allow_html=True,
-    )
 
     if today_str in st.session_state.data and st.session_state.data[today_str].get(
         "logs"
@@ -258,54 +222,25 @@ if st.session_state.nav_page == "Бүртгэх":
             item_time = item["time"]
             item_text = item["text"]
 
-            # 2 секунд удаан дарвал устгах function-г ажиллуулах JavaScript код
-            card_html = (
-                '<div class="log-card-box" id="card_'
-                + item_id
-                + '" '
-                + 'onmousedown="window.holdTimer_'
-                + item_id
-                + ' = setTimeout(() => { '
-                + "window.location.href = window.location.pathname + '?delete_id="
-                + item_id
-                + "';"
-                + "}, 2000);\" "
-                + 'onmouseup="clearTimeout(window.holdTimer_'
-                + item_id
-                + ');" '
-                + 'ontouchstart="window.holdTimer_'
-                + item_id
-                + ' = setTimeout(() => { '
-                + "window.location.href = window.location.pathname + '?delete_id="
-                + item_id
-                + "';"
-                + "}, 2000);\" "
-                + 'ontouchend="clearTimeout(window.holdTimer_'
-                + item_id
-                + ');">'
-                + '<div style="display: flex; justify-content: space-between; align-items: center;">'
-                + '<span style="font-size: 11px; background: #2ff5ca; color: #000; padding: 3px 8px; border-radius: 6px; font-weight: 700;">🕒 '
-                + item_time
-                + "</span>"
-                + '<span style="font-size: 10px; color: #ef4444; font-weight: 600;">⏳ 2 сек барьж устгах</span>'
-                + "</div>"
-                + '<p style="font-size: 14px; margin-top: 8px; font-weight: 600; color: #f8fafc; word-break: break-word; margin-bottom: 0px;">'
-                + item_text
-                + "</p>"
-                + "</div>"
-            )
-            st.markdown(card_html, unsafe_allow_html=True)
-
-        # Query parameter шалгаад автоматаар шууд устгах хэсэг
-        query_params = st.query_params
-        if "delete_id" in query_params:
-            del_id = query_params["delete_id"]
-            st.session_state.data[today_str]["logs"] = [
-                x for x in logs_list if x["id"] != del_id
-            ]
-            save_data(st.session_state.data)
-            st.query_params.clear()
-            st.rerun()
+            col_card, col_btn = st.columns([5, 1])
+            with col_card:
+                st.markdown(
+                    f"""
+                    <div class="log-card-box">
+                        <span style="font-size: 11px; background: #2ff5ca; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 700;">🕒 {item_time}</span>
+                        <p style="font-size: 14px; margin-top: 6px; font-weight: 600; color: #f8fafc; margin-bottom: 0px; word-break: break-word;">{item_text}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col_btn:
+                st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                if st.button("❌", key=f"del_{item_id}", help="Устгах"):
+                    st.session_state.data[today_str]["logs"] = [
+                        x for x in logs_list if x["id"] != item_id
+                    ]
+                    save_data(st.session_state.data)
+                    st.rerun()
     else:
         st.info("Өнөөдөр одоогоор бүртгэсэн ажил алга.")
 
@@ -316,17 +251,15 @@ elif st.session_state.nav_page == "Нэгтгэл":
     def summarize_with_ai(logs_list):
         if not logs_list:
             return "Өнөөдөр бүртгэгдсэн ажил алга байна."
-
         prompt = (
-            "Доорх цагийн дарааллаар хийсэн ажлуудыг цалин бодох, тайлан гаргахад "
-            "яг тохирохоор маш цэгцтэй, ойлгомжтой, товч тодорхой жагсаалт болгон Монгол хэлээр дүгнэж өгнө үү:\n\n"
+            "Доорх цагийн дарааллаар хийсэн ажлуудыг тайлан гаргахад яг тохирохоор "
+            "маш цэгцтэй, ойлгомжтой, товч тодорхой жагсаалт болгон Монгол хэлээр дүгнэж өгнө үү:\n\n"
         )
         for log in logs_list:
             prompt += f"[{log['time']}] {log['text']}\n"
-
         try:
             response = client.models.generate_content(
-                model="gemini-3.5-flash-lite", contents=prompt
+                model="gemini-2.5-flash", contents=prompt
             )
             return response.text
         except Exception as e:
@@ -342,7 +275,7 @@ elif st.session_state.nav_page == "Нэгтгэл":
                 """
                 <div class="neon-loader-container">
                     <div class="neon-ring"></div>
-                    <div style="margin-top: 15px; color: #2ff5ca; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">Тайланг боловсруулж байна...</div>
+                    <div style="margin-top: 15px; color: #2ff5ca; font-weight: 700; font-size: 14px;">Тайланг боловсруулж байна...</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
