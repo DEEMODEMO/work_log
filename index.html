@@ -183,7 +183,7 @@
         <!-- ХУУДАС 2: НЭГТГЭЛ -->
         <div id="page-negtgel" class="page-content" style="display: none;">
             <h4>Ажлын тайлан нэгтгэх</h4>
-            <button class="custom-btn" onclick="generateAIReport()">✨ Тайлангийн хувилбарууд үүсгэх</button>
+            <button class="custom-btn" onclick="generateAIReport()">✨ Тайлангийн хувилбар үүсгэх</button>
             <div id="aiReportContainer" style="margin-top: 20px;"></div>
         </div>
 
@@ -446,13 +446,27 @@
             const data = window.appData[selectedDate];
             let html = "";
             if (data && data.summary) {
-                html += `<p style="text-align:left; margin-top:15px;"><strong>${selectedDate} өдрийн хураангуй:</strong></p>`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">`;
+                html += `<p style="text-align:left; margin:0;"><strong>${selectedDate} өдрийн хураангуй:</strong></p>`;
+                html += `<button class="custom-btn" style="width: auto !important; padding: 6px 12px !important; margin: 0 !important; background: radial-gradient(circle at top right, #ff5c5c, #d32f2f) !important; box-shadow: 2px 2px 0px -1px #ff0000, 2px 2px 0px 1px #000 !important;" onclick="deleteArchive('${selectedDate}')">🗑️ Устгах</button>`;
+                html += `</div>`;
                 html += `<div class="summary-box">${data.summary}</div>`;
             } else {
                 html += `<p style="text-align:left; margin-top:15px; color: #94a3b8;">Энэ өдөр тайлан хадгалаагүй байна.</p>`;
             }
 
             contentContainer.innerHTML = html;
+        }
+
+        window.deleteArchive = async function(dateKey) {
+            if (confirm(`${dateKey} өдрийн архивыг устгахдаа итгэлтэй байна уу?`)) {
+                if (window.appData[dateKey]) {
+                    delete window.appData[dateKey];
+                    await saveDataToGist();
+                    loadArchiveDropdown();
+                    alert("Амжилттай устгагдлаа.");
+                }
+            }
         }
 
         // Ачаалж эхлэхэд Gist-ээс датагаа татах
