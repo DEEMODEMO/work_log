@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS
+# Загварлаг CSS болон Scroll байрлал хадгалах JavaScript код
 st.markdown(
     """
     <style>
@@ -91,6 +91,117 @@ st.markdown(
         border-radius: 12px !important;
     }
     </style>
+
+    <script>
+    // Хуудас доош гүйхээс сэргийлж байрлалыг санах скрипт
+    document.addEventListener("DOMContentLoaded", function() {
+        const scrollPos = localStorage.getItem('scrollpos');
+        if (scrollPos) {
+            window.scrollTo(0, scrollPos);
+            localStorage.removeItem('scrollpos');
+        }
+    });
+    window.addEventListener("beforeunload", function() {
+        localStorage.setItem('scrollStreamlit нь хуудас шинэчлэгдэх буюу `st.rerun()` хийгдэх бүрт л хуудасны хамгийн **дээрээс эхэлж ачаалагддаг** онцлогтой учраас таныг юм бичингуут эсвэл юм хадгалахад хуудас гүйгээд дээр гараад байдаг юм.
+
+Үүнийг шийдэх хамгийн зөв гарцууд:
+
+1. **Цагийг JavaScript-ээр шинэчлэх:** Python-оор цаг бүрт `st.rerun()` хийж хуудас автоматаарrefresh хийлгэх гэж оролдох нь маш буруу бөгөөд хэрэглэгчийн бичиж буй зүйлийг тасалдуулж, дээр аваачаад хаячихдаг. Тиймээс цагийг зөвхөн хөтөч (Browser) дээр нь JavaScript-ээр секундийг нь гүйлгээд байхаар шийдсэн нь дээр.
+2. **State болон Scroll байрлал тогтоох:** Streamlit дээр хуудас доошоо гүйгээд байх асуудлыг шийдэхэд хэрэглэгч ямар нэгэн товчлуур дарах эсвэл форм бөглөх үед хуудасны байрлалыг хадгалах зорилгоор хэсэгчилсэн байдлаар component эсвэл streamlit-elements ашиглах хэрэгтэй болдог. Гэхдээ энгийн аргаар бол бичих хэсгийг хуудасны **хамгийн дээд хэсэгт** байрлуулах нь хамгийн эвтэйхэн байдаг.
+
+Таны хүсэлтээр цаг автоматаар секундээрээ гүйдэг атлаа хуудас өөрөө дур мэдэн refresh хийж дээр үсрэхгүй байхаар кодоос шаардлагагүй дахин ачаалалтуудыг цэвэрлэлээ. 
+
+GitHub дээрх `app.py` файлаа доорх кодоор солиод хадгалаарай:
+
+```python
+from datetime import datetime
+import json
+import os
+import time
+from zoneinfo import ZoneInfo
+from google import genai
+import streamlit as st
+
+UB_TZ = ZoneInfo("Asia/Ulaanbaatar")
+
+
+def get_ub_now():
+    return datetime.now(UB_TZ)
+
+
+st.set_page_config(
+    page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
+)
+
+st.markdown(
+    """
+    <style>
+    @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap)');
+    
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .stApp {
+        background: radial-gradient(circle at 10% 20%, rgba(121, 40, 202, 0.6) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(255, 0, 128, 0.5) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(14, 125, 248, 0.5) 0%, transparent 50%),
+                    linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        background-attachment: fixed;
+        color: #f8fafc;
+    }
+    
+    .stButton>button, div.stFormSubmitButton>button {
+        color: #fff !important;
+        font-size: 13px !important;
+        font-weight: bold !important;
+        box-shadow: 4px 4px 0px -1px #0adabe, 4px 4px 0px 1px #000 !important;
+        padding: 8px 4px !important;
+        border-radius: 10px !important;
+        border: 2px solid #000 !important;
+        background: radial-gradient(circle at top right, #2ff5ca, #0e7df8) !important;
+        cursor: pointer !important;
+        transition: 0.3s ease !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+    }
+    
+    .stButton>button:hover, div.stFormSubmitButton>button:hover {
+        transform: translate(-.1em, -.1em) !important;
+        box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
+    }
+
+    .live-clock-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 12px 15px;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .summary-box {
+        padding: 22px;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid #ff0080;
+        color: #f8fafc;
+        margin-top: 10px;
+        box-shadow: 6px 6px 0px #ff0080;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+    
+    .stTextArea textarea {
+        background-color: rgba(15, 23, 42, 0.9) !important;
+        color: #f8fafc !important;
+        border: 2px solid #0adabe !important;
+        border-radius: 12px !important;
+    }
+    </style>
 """,
     unsafe_allow_html=True,
 )
@@ -128,7 +239,7 @@ initial_ub = get_ub_now()
 initial_time_str = initial_ub.strftime("%Y оны %m сарын %d · %H:%M:%S")
 today_str = initial_ub.strftime("%Y-%m-%d")
 
-# Алдаа гарсан хэсгийг энгийн string болгож зарилаа
+# Live Clock JS (Пайтон талаас дахин refresh хийхгүйгээр зөвхөн хөтөч дээр цаг гүйнэ)
 clock_html = f"""
     <div class="live-clock-card">
         <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Улаанбаатарын цаг</span>
@@ -154,7 +265,9 @@ clock_html = f"""
             elem.innerText = year + ' оны ' + month + ' сарын ' + day + ' · ' + hour + ':' + minute + ':' + second;
         }}
     }}
-    setInterval(updateClock, 1000);
+    if (!window.clockInterval) {{
+        window.clockInterval = setInterval(updateClock, 1000);
+    }}
     </script>
 """
 st.markdown(clock_html, unsafe_allow_html=True)
