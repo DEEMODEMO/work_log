@@ -74,6 +74,28 @@
             box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
         }
 
+        /* Жижиг устгах товчлуурын стил */
+        .delete-btn {
+            background: #ff5c5c !important;
+            color: #fff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            border: 2px solid #000 !important;
+            cursor: pointer !important;
+            box-shadow: 2px 2px 0px #000 !important;
+            transition: 0.2s ease !important;
+            width: auto !important;
+            display: inline-block !important;
+            margin: 0 !important;
+        }
+
+        .delete-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px #000 !important;
+        }
+
         .nav-container {
             display: flex;
             gap: 10px;
@@ -448,7 +470,7 @@
             if (data && data.summary) {
                 html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">`;
                 html += `<p style="text-align:left; margin:0;"><strong>${selectedDate} өдрийн хураангуй:</strong></p>`;
-                html += `<button class="custom-btn" style="width: auto !important; padding: 6px 12px !important; margin: 0 !important; background: radial-gradient(circle at top right, #ff5c5c, #d32f2f) !important; box-shadow: 2px 2px 0px -1px #ff0000, 2px 2px 0px 1px #000 !important;" onclick="deleteArchive('${selectedDate}')">🗑️ Устгах</button>`;
+                html += `<button class="delete-btn" onclick="deleteArchive('${selectedDate}')">🗑️ Устгах</button>`;
                 html += `</div>`;
                 html += `<div class="summary-box">${data.summary}</div>`;
             } else {
@@ -459,7 +481,7 @@
         }
 
         window.deleteArchive = async function(dateKey) {
-            if (confirm(`${dateKey} өдрийн архивыг устгахдаа итгэлтэй байна уу?`)) {
+            if (confirm(`${dateKey} өдрийн архивыг бүхэлд нь устгахдаа итгэлтэй байна уу?`)) {
                 if (window.appData[dateKey]) {
                     delete window.appData[dateKey];
                     await saveDataToGist();
