@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS
+# Загварлаг CSS (Товчны хэмжээг томруулж, текст бүтэн харагдах байдлаар зассан)
 st.markdown(
     """
     <style>
@@ -38,20 +38,22 @@ st.markdown(
         color: #f8fafc;
     }
     
-    /* Товчны ерөнхий загвар */
+    /* Товчны загвар - Текст шахтахааргүй, том бөгөөд тод болгосон */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
-        font-size: 13px !important;
-        font-weight: bold !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
         box-shadow: 4px 4px 0px -1px #0adabe, 4px 4px 0px 1px #000 !important;
-        padding: 8px 4px !important;
-        border-radius: 10px !important;
+        padding: 12px 18px !important;
+        border-radius: 12px !important;
         border: 2px solid #000 !important;
         background: radial-gradient(circle at top right, #2ff5ca, #0e7df8) !important;
         cursor: pointer !important;
         transition: 0.3s ease !important;
         width: 100% !important;
-        white-space: nowrap !important;
+        white-space: normal !important;
+        text-align: left !important;
+        line-height: 1.5 !important;
     }
     
     .stButton>button:hover, div.stFormSubmitButton>button:hover {
@@ -128,7 +130,7 @@ initial_ub = get_ub_now()
 initial_time_str = initial_ub.strftime("%Y оны %m сарын %d · %H:%M:%S")
 today_str = initial_ub.strftime("%Y-%m-%d")
 
-# Live Clock JS (Пайтон талаас дахин refresh хийхгүйгээр зөвхөн хөтөч дээр цаг гүйнэ)
+# Real-time цаг (Browser дээр ажиллах JS)
 clock_html = f"""
     <div class="live-clock-card">
         <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Улаанбаатарын цаг</span>
@@ -210,7 +212,7 @@ if st.session_state.nav_page == "Бүртгэх":
             st.rerun()
 
     st.markdown(f"#### Өнөөдрийн тэмдэглэл ({today_str})")
-    st.markdown("<p style='font-size: 13px; color: #94a3b8;'>💡 Засахын тулд тухайн хийсэн ажил дээрээ дарна уу.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 13px; color: #94a3b8;'>💡 Засах эсвэл устгахын тулд тухайн ажил дээр дарна уу.</p>", unsafe_allow_html=True)
 
     if today_str in st.session_state.data and st.session_state.data[today_str].get("logs"):
         logs_list = st.session_state.data[today_str]["logs"]
@@ -253,7 +255,7 @@ if st.session_state.nav_page == "Бүртгэх":
                         st.session_state.editing_id = None
                         st.rerun()
             else:
-                btn_label = f"🕒 {item_time}  |  {item_text}"
+                btn_label = f"🕒 {item_time}\n\n{item_text}"
                 if st.button(btn_label, key=f"btn_edit_{item_id}", use_container_width=True):
                     st.session_state.editing_id = item_id
                     st.rerun()
@@ -401,7 +403,7 @@ elif st.session_state.nav_page == "Архив":
                             st.session_state.archive_editing_id = None
                             st.rerun()
                 else:
-                    if st.button(f"🕒 {item_time}  |  {item_text}", key=f"arch_btn_{item_id}", use_container_width=True):
+                    if st.button(f"🕒 {item_time}\n\n{item_text}", key=f"arch_btn_{item_id}", use_container_width=True):
                         st.session_state.archive_editing_id = item_id
                         st.rerun()
     else:
