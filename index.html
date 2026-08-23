@@ -74,7 +74,30 @@
             box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
         }
 
-        /* Жижиг устгах товчлуурын стил */
+        /* Архив болон Нэгтгэл хэсгийн үр дүнг товчлуур хэлбэртэй болгох нь */
+        .summary-btn {
+            color: #fff !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            box-shadow: 4px 4px 0px -1px #ff0080, 4px 4px 0px 1px #000 !important;
+            padding: 18px !important;
+            border-radius: 16px !important;
+            border: 2px solid #000 !important;
+            background: radial-gradient(circle at top right, #ff0080, #7928ca) !important;
+            cursor: pointer !important;
+            transition: 0.3s ease !important;
+            width: 100% !important;
+            white-space: pre-wrap !important;
+            text-align: left !important;
+            line-height: 1.6 !important;
+            margin-top: 10px;
+        }
+
+        .summary-btn:hover {
+            transform: translate(-.1em, -.1em) !important;
+            box-shadow: 7px 7px 0px -1px #ff0080, 7px 7px 0px 1px #000 !important;
+        }
+
         .delete-btn {
             background: #ff5c5c !important;
             color: #fff !important;
@@ -107,19 +130,6 @@
             text-align: center !important;
             padding: 10px !important;
             font-size: 14px !important;
-        }
-
-        .summary-box {
-            padding: 22px;
-            border-radius: 16px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 2px solid #ff0080;
-            color: #f8fafc;
-            margin-top: 10px;
-            box-shadow: 6px 6px 0px #ff0080;
-            font-size: 15px;
-            line-height: 1.6;
-            white-space: pre-wrap;
         }
         
         textarea, select {
@@ -414,8 +424,7 @@
                 options.forEach((opt, idx) => {
                     html += `
                         <div style="margin-bottom: 15px;">
-                            <button class="custom-btn" onclick="saveSummary(${idx})">Хувилбар #${idx + 1}-ийг сонгож хадгалах</button>
-                            <div class="summary-box" style="margin-top: 5px;">${opt}</div>
+                            <button class="summary-btn" onclick="saveSummary(${idx})">Хувилбар #${idx + 1}-ийг сонгож хадгалах:\n\n${opt}</button>
                         </div>
                     `;
                 });
@@ -472,7 +481,8 @@
                 html += `<p style="text-align:left; margin:0;"><strong>${selectedDate} өдрийн хураангуй:</strong></p>`;
                 html += `<button class="delete-btn" onclick="deleteArchive('${selectedDate}')">🗑️ Устгах</button>`;
                 html += `</div>`;
-                html += `<div class="summary-box">${data.summary}</div>`;
+                // Энд текст хэлбэртэй байсныг товчлуурын загвартай (summary-btn) болгож өөрчлөв
+                html += `<button class="summary-btn" style="cursor: default !important; transform: none !important;">${data.summary}</button>`;
             } else {
                 html += `<p style="text-align:left; margin-top:15px; color: #94a3b8;">Энэ өдөр тайлан хадгалаагүй байна.</p>`;
             }
