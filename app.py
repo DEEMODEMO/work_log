@@ -274,7 +274,7 @@ elif st.session_state.nav_page == "Нэгтгэл":
         try:
             # Gemini 2.5 Flash загвар руу холбогдож байна
             response = client.models.generate_content(
-                model="gemini-3.6-flash-lite", contents=prompt
+                model="gemini-3.6-flash", contents=prompt
             )
             return response.text
         except Exception as e:
