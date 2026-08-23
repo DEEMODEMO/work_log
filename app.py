@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS (Товчлууруудыг хэвтээ байрлуулах зориулалтын flex wrap нэмсэн)
+# Загварлаг CSS (Таб товчлууруудыг утсан дээр ч заавал хэвтээ байлгах CSS-тэй)
 st.markdown(
     """
     <style>
@@ -29,13 +29,26 @@ st.markdown(
         color: #f8fafc;
     }
     
-    /* Товчны загвар */
+    /* 3 товчлуурыг утсан дээр ч ялгаагүй заавал хэвтээ байрлуулах зохицуулалт */
+    [data-testid="column"] {
+        width: calc(33.333% - 1rem) !important;
+        flex: 1 1 calc(33.333% - 1rem) !important;
+        min-width: 90px !important;
+    }
+    
+    div[data-testid="horizontal--block"], div.row-widget.stHorizontal {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    /* Товчны ерөнхий загвар */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
         font-size: 13px !important;
         font-weight: bold !important;
         box-shadow: 4px 4px 0px -1px #0adabe, 4px 4px 0px 1px #000 !important;
-        padding: 8px 6px !important;
+        padding: 8px 4px !important;
         border-radius: 10px !important;
         border: 2px solid #000 !important;
         background: radial-gradient(circle at top right, #2ff5ca, #0e7df8) !important;
@@ -48,6 +61,11 @@ st.markdown(
     .stButton>button:hover, div.stFormSubmitButton>button:hover {
         transform: translate(-.1em, -.1em) !important;
         box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
+    }
+
+    /* Устгах товчны тусгай харагдах байдал (Хар дэвсгэртэй, улаан/неон хүрээтэй) */
+    button[kind="secondary"] p {
+        color: #fff !important;
     }
 
     /* Бодит цаг харуулах картын загвар */
@@ -174,7 +192,7 @@ st.markdown("---")
 if "nav_page" not in st.session_state:
     st.session_state.nav_page = "Бүртгэх"
 
-# 3 товчлуурыг хэвтээ байдлаар зэрэгцүүлж байрлуулах
+# 3 товчлуурыг хэвтээ байдлаар зэрэгцүүлэх
 col_n1, col_n2, col_n3 = st.columns(3)
 with col_n1:
     if st.button("📝 Бүртгэх", use_container_width=True):
@@ -234,8 +252,21 @@ if st.session_state.nav_page == "Бүртгэх":
                     unsafe_allow_html=True,
                 )
             with col_btn:
-                st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
-                if st.button("❌", key=f"del_{item_id}", help="Устгах"):
+                st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
+                # Устгах товчийг илүү тод, анхаарал татахуйц неон улаан хүрээтэй болгов
+                st.markdown(
+                    """
+                    <style>
+                    div[data-testid="column"] button {
+                        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%) !important;
+                        box-shadow: 3px 3px 0px #000 !important;
+                        border: 2px solid #000 !important;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if st.button("🗑️", key=f"del_{item_id}", help="Устгах"):
                     st.session_state.data[today_str]["logs"] = [
                         x for x in logs_list if x["id"] != item_id
                     ]
@@ -258,6 +289,7 @@ elif st.session_state.nav_page == "Нэгтгэл":
         for log in logs_list:
             prompt += f"[{log['time']}] {log['text']}\n"
         try:
+            # Gemini 2.5 Flash загвар рүү амжилттай холбогдоно
             response = client.models.generate_content(
                 model="gemini-2.5-flash", contents=prompt
             )
