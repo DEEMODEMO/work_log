@@ -283,7 +283,7 @@ elif st.session_state.nav_page == "Нэгтгэл":
 """
         try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash", contents=prompt
+                model="gemini-3.6-flash", contents=prompt
             )
             # ---HUVIILBAR--- гэсэн үгээр хувааж жагсаалт болгох
             parts = response.text.split("---HUVIILBAR---")
