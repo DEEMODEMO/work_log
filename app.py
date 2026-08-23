@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS (Таб товчлууруудыг утсан дээр ч заавал хэвтээ байлгах CSS-тэй)
+# Загварлаг CSS (Таб товчлууруудыг хэвтээ байрлуулах тохиргоо)
 st.markdown(
     """
     <style>
@@ -29,7 +29,7 @@ st.markdown(
         color: #f8fafc;
     }
     
-    /* 3 товчлуурыг утсан дээр ч ялгаагүй заавал хэвтээ байрлуулах зохицуулалт */
+    /* 3 товчлуурыг хэвтээ байрлуулах зохицуулалт */
     [data-testid="column"] {
         width: calc(33.333% - 1rem) !important;
         flex: 1 1 calc(33.333% - 1rem) !important;
@@ -42,7 +42,7 @@ st.markdown(
         align-items: center !important;
     }
 
-    /* Товчны ерөнхий загвар */
+    /* Товчны ерөнхий загвар (Устгах товчийг бусадтай яг ижил болгосон) */
     .stButton>button, div.stFormSubmitButton>button {
         color: #fff !important;
         font-size: 13px !important;
@@ -61,11 +61,6 @@ st.markdown(
     .stButton>button:hover, div.stFormSubmitButton>button:hover {
         transform: translate(-.1em, -.1em) !important;
         box-shadow: 7px 7px 0px -1px #0e7df8, 7px 7px 0px 1px #000 !important;
-    }
-
-    /* Устгах товчны тусгай харагдах байдал (Хар дэвсгэртэй, улаан/неон хүрээтэй) */
-    button[kind="secondary"] p {
-        color: #fff !important;
     }
 
     /* Бодит цаг харуулах картын загвар */
@@ -253,20 +248,8 @@ if st.session_state.nav_page == "Бүртгэх":
                 )
             with col_btn:
                 st.markdown("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True)
-                # Устгах товчийг илүү тод, анхаарал татахуйц неон улаан хүрээтэй болгов
-                st.markdown(
-                    """
-                    <style>
-                    div[data-testid="column"] button {
-                        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%) !important;
-                        box-shadow: 3px 3px 0px #000 !important;
-                        border: 2px solid #000 !important;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                if st.button("🗑️", key=f"del_{item_id}", help="Устгах"):
+                # Устгах товч (❌) - бусад товчлууртай яг ижил загвартай боллоо
+                if st.button("❌", key=f"del_{item_id}", help="Устгах"):
                     st.session_state.data[today_str]["logs"] = [
                         x for x in logs_list if x["id"] != item_id
                     ]
@@ -289,9 +272,9 @@ elif st.session_state.nav_page == "Нэгтгэл":
         for log in logs_list:
             prompt += f"[{log['time']}] {log['text']}\n"
         try:
-            # Gemini 2.5 Flash загвар рүү амжилттай холбогдоно
+            # Gemini 2.5 Flash загвар руу холбогдож байна
             response = client.models.generate_content(
-                model="gemini-2.5-flash", contents=prompt
+                model="gemini-3.6-flash-lite", contents=prompt
             )
             return response.text
         except Exception as e:
