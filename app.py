@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS
+# Загварлаг CSS (Товчлууруудыг хэвтээ байрлуулах зориулалтын flex wrap нэмсэн)
 st.markdown(
     """
     <style>
@@ -151,7 +151,6 @@ now = datetime.now()
 today_str = now.strftime("%Y-%m-%d")
 current_time_py = now.strftime("%Y оны %m сарын %d · %H:%M:%S")
 
-# Python-оор цаг гаргах хэсэг
 st.markdown(
     f"""
     <div class="live-clock-card">
@@ -175,15 +174,16 @@ st.markdown("---")
 if "nav_page" not in st.session_state:
     st.session_state.nav_page = "Бүртгэх"
 
+# 3 товчлуурыг хэвтээ байдлаар зэрэгцүүлж байрлуулах
 col_n1, col_n2, col_n3 = st.columns(3)
 with col_n1:
-    if st.button("📝 Бүртгэх"):
+    if st.button("📝 Бүртгэх", use_container_width=True):
         st.session_state.nav_page = "Бүртгэх"
 with col_n2:
-    if st.button("📊 Нэгтгэл"):
+    if st.button("📊 Нэгтгэл", use_container_width=True):
         st.session_state.nav_page = "Нэгтгэл"
 with col_n3:
-    if st.button("📚 Архив"):
+    if st.button("📚 Архив", use_container_width=True):
         st.session_state.nav_page = "Архив"
 
 st.markdown("<br>", unsafe_allow_html=True)
