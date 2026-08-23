@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="Ажлын Тэмдэглэл", page_icon="📝", layout="centered"
 )
 
-# Загварлаг CSS (Бүх товч болон картуудыг хэвтээ болон цэвэрхэн харагдуулах)
+# Загварлаг CSS
 st.markdown(
     """
     <style>
@@ -124,42 +124,40 @@ def save_data(data):
 if "data" not in st.session_state:
     st.session_state.data = load_data()
 
-# Шууд Python болон JS хослуулан сервер болон browser дээр алдаагүй гаргах цаг
 initial_ub = get_ub_now()
 initial_time_str = initial_ub.strftime("%Y оны %m сарын %d · %H:%M:%S")
 today_str = initial_ub.strftime("%Y-%m-%d")
 
-st.markdown(
-    f"""
+# Алдаа гарсан хэсгийг энгийн string болгож зарилаа
+clock_html = f"""
     <div class="live-clock-card">
         <span style="font-size: 12px; color: #2ff5ca; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">🟢 Улаанбаатарын цаг</span>
         <div id="live-clock" style="font-size: 17px; font-weight: 800; color: #ffffff; margin-top: 4px;">{initial_time_str}</div>
     </div>
     <script>
-    function updateClock() {
+    function updateClock() {{
         const options = {{ timeZone: 'Asia/Ulaanbaatar', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }};
         const formatter = new Intl.DateTimeFormat([], options);
         const d = new Date();
         const parts = formatter.formatToParts(d);
         let year, month, day, hour, minute, second;
-        for (let p of parts) {
+        for (let p of parts) {{
             if (p.type === 'year') year = p.value;
             if (p.type === 'month') month = p.value;
             if (p.type === 'day') day = p.value;
             if (p.type === 'hour') hour = p.value;
             if (p.type === 'minute') minute = p.value;
             if (p.type === 'second') second = p.value;
-        }
+        }}
         const elem = document.getElementById('live-clock');
-        if (elem) {
+        if (elem) {{
             elem.innerText = year + ' оны ' + month + ' сарын ' + day + ' · ' + hour + ':' + minute + ':' + second;
-        }
-    }
+        }}
+    }}
     setInterval(updateClock, 1000);
     </script>
-    """,
-    unsafe_allow_html=True,
-)
+"""
+st.markdown(clock_html, unsafe_allow_html=True)
 
 st.markdown(
     "<h2 style='text-align: center; color: #2ff5ca; font-weight: 800;'>Ажлын Тэмдэглэл & Тайлан</h2>",
@@ -229,7 +227,6 @@ if st.session_state.nav_page == "Бүртгэх":
                     updated_text = st.text_area(
                         "Засах утга:", value=item_text, height=80, label_visibility="collapsed"
                     )
-                    # Хэвтээ байдлаар товчлууруудыг зэрэгцүүлэх
                     c_save, c_del, c_cancel = st.columns(3)
                     with c_save:
                         save_btn = st.form_submit_button("💾 Хадгалах")
@@ -254,7 +251,6 @@ if st.session_state.nav_page == "Бүртгэх":
                         st.session_state.editing_id = None
                         st.rerun()
             else:
-                # Текст болон ажил оруулсан хэсгийг бүтэн товч хэлбэртэй болгож дээр нь дарвал засагддаг болгох
                 btn_label = f"🕒 {item_time}  |  {item_text}"
                 if st.button(btn_label, key=f"btn_edit_{item_id}", use_container_width=True):
                     st.session_state.editing_id = item_id
